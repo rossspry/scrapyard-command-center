@@ -42,3 +42,29 @@ data/exports/
 
 # external runtime data
 /data/
+
+# --- Scrapyard project extras ---
+# Audio files (alarms, gates, etc.)
+*.mp3
+*.wav
+*.ogg
+
+# Backups / temp files
+*.bak.*
+*.save
+*.hdr
+
+# Local DB and JSON logs
+*.db
+*.jsonl
+
+# Example / local-only configs
+alarm/data/cameras.json
+alarm/data/cameras_ai.json.bak.*
+alarm/data/alerts.jsonl
+alarm/data/events.jsonl
+
+# Build artifacts
+__pycache__/
+*.pyc
+
