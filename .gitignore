@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+dist/
+build/
+
+# Node / web
+node_modules/
+.cache/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Env & secrets (store keys in .env, not code)
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.crt
+secrets/
+config/*.local.*
+config/*secrets*.*
+*.sqlite
+
+# Project data/exports (snapshots, renders, large files)
+data/exports/
+*.jpg
+*.png
+*.mp4
+*.mov
+
+# external runtime data
+/data/
