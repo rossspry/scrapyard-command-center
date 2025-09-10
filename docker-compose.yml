@@ -1,0 +1,36 @@
+services:
+  api:
+    build: ./server
+    container_name: scrapyard_api
+    environment:
+      - DATABASE_URL=sqlite:////data/scrapyard.db
+      - EXPORT_DIR=/data/exports
+      # Route alerts / playback to your PA/voice script. Supports {text} and {file}
+      # Example to just play with ffplay: ALERT_CMD=ffplay -nodisp -autoexit {file}
+      - ALERT_CMD=
+      # OpenAI TTS (key comes from .env via ${OPENAI_API_KEY})
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_TTS_MODEL=gpt-4o-mini-tts
+      - OPENAI_TTS_VOICE=onyx
+      - OPENAI_TTS_FORMAT=mp3
+      - OPENAI_TTS_INSTRUCTIONS=Speak as a sophisticated British male assistant. Clear articulation, warm tone, confident but not pompous.
+      # Auto-play synthesized audio by invoking ALERT_CMD with {file}
+      - PLAY_TTS=0
+    volumes:
+      - ./server/app:/app/app
+      - ./data:/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  web:
+    image: node:22-alpine
+    working_dir: /web
+    volumes:
+      - ./web:/web
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    restart: unless-stopped
