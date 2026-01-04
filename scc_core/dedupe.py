@@ -1,16 +1,21 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 from .events import Event
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
 class _Incident:
     best_event: Event
     last_updated: datetime
+    first_seen: datetime
+    has_frigate: bool = False
 
 
 class DedupeAggregator:
@@ -24,7 +29,8 @@ class DedupeAggregator:
         """
         Consume an event and decide whether to emit a notification-worthy incident.
 
-        Returns the chosen Event when a notify decision should be emitted, otherwise None.
+        Returns the chosen Event when a Frigate event confirms an incident within the
+        dedupe window; otherwise None.
         """
 
         now = event.ts if event.ts.tzinfo else datetime.now(timezone.utc)
@@ -32,21 +38,38 @@ class DedupeAggregator:
 
         key = (event.camera_id, event.event_type)
         incident = self._incidents.get(key)
-        if incident is None or (now - incident.best_event.ts > self.window):
-            self._incidents[key] = _Incident(best_event=event, last_updated=now)
-            return event
+        if incident is None or (now - incident.last_updated > self.window):
+            incident = _Incident(
+                best_event=event,
+                last_updated=now,
+                first_seen=now,
+                has_frigate=event.source == "frigate",
+            )
+            self._incidents[key] = incident
+        else:
+            incident.last_updated = now
+            if self._is_preferred(event, incident.best_event):
+                incident.best_event = event
+            if event.source == "frigate":
+                incident.has_frigate = True
 
-        incident.last_updated = now
-        if self._is_preferred(event, incident.best_event):
-            incident.best_event = event
+        if event.source == "frigate":
+            return incident.best_event
         return None
 
     def _purge(self, now: datetime) -> None:
-        expired_keys = [
-            key
-            for key, inc in self._incidents.items()
-            if now - inc.last_updated > self.window
-        ]
+        expired_keys = []
+        for key, inc in self._incidents.items():
+            inactive = now - inc.last_updated > self.window
+            pending_expired = not inc.has_frigate and now - inc.first_seen >= self.window
+            if pending_expired:
+                logger.debug(
+                    "Dropping pending incident without Frigate confirmation",
+                    extra={"camera_id": key[0], "event_type": key[1]},
+                )
+            if inactive or pending_expired:
+                expired_keys.append(key)
+
         for key in expired_keys:
             del self._incidents[key]
 
