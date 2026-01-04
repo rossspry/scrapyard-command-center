@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 from .events import Event
 
@@ -10,6 +10,7 @@ from .events import Event
 @dataclass
 class _Incident:
     best_event: Event
+    first_seen: datetime
     last_updated: datetime
 
 
@@ -24,22 +25,32 @@ class DedupeAggregator:
         """
         Consume an event and decide whether to emit a notification-worthy incident.
 
-        Returns the chosen Event when a notify decision should be emitted, otherwise None.
+        Rules:
+        - Reolink is early-signal only (NO fallback alerts).
+        - Frigate is authoritative; SCC emits only when a Frigate event arrives.
+        - Within the dedupe window, prefer Frigate as the incident representative.
         """
-
-        now = event.ts if event.ts.tzinfo else datetime.now(timezone.utc)
-        self._purge(now)
+        ts = event.ts if event.ts.tzinfo else datetime.now(timezone.utc)
+        self._purge(ts)
 
         key = (event.camera_id, event.event_type)
-        incident = self._incidents.get(key)
-        if incident is None or (now - incident.best_event.ts > self.window):
-            self._incidents[key] = _Incident(best_event=event, last_updated=now)
-            return event
+        inc = self._incidents.get(key)
 
-        incident.last_updated = now
-        if self._is_preferred(event, incident.best_event):
-            incident.best_event = event
-        return None
+        expired = inc is None or (ts - inc.last_updated > self.window)
+        if expired:
+            inc = _Incident(best_event=event, first_seen=ts, last_updated=ts)
+            self._incidents[key] = inc
+        else:
+            inc.last_updated = ts
+            if self._is_preferred(event, inc.best_event):
+                inc.best_event = event
+
+        # NO fallback alerts: never emit based on Reolink-only signals.
+        if event.source != "frigate":
+            return None
+
+        # Frigate confirms; emit the preferred representative (frigate-preferred).
+        return inc.best_event
 
     def _purge(self, now: datetime) -> None:
         expired_keys = [
