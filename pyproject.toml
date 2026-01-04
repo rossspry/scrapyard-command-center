@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scc-core"
+version = "0.1.0"
+description = "Scrapyard Command Center core utilities"
+authors = [{name = "Scrapyard Command Center"}]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "paho-mqtt>=1.6.1",
+]
+
+[project.optional-dependencies]
+dev = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["scc_core*", "config*", "docs*", "README.md"]

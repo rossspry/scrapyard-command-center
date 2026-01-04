@@ -8,9 +8,19 @@ Scrapyard Command Center is the future home for tooling that coordinates scrapya
 - [Architectural decisions](docs/decisions/README.md)
 
 ## Project status
-- **Planning:** No runtime code has been committed yet.
+- **Planning:** Baseline utilities are landing; SCC remains early-stage.
 - **Architecture:** High-level components and responsibilities are captured in `docs/overview.md`.
 - **Development conventions:** Contribution and review expectations are outlined in `docs/development.md`.
+
+## Frigate MQTT adapter
+SCC treats detectors as inputs and makes the notification decisions itself. A minimal Frigate MQTT adapter is available for
+local testing without real cameras.
+
+1. Install dependencies: `pip install -e .`
+2. Copy and edit MQTT settings in `config/example_frigate.yml` (host, port, credentials, topic, client ID, dedupe window).
+3. Run the adapter: `python -m scc_core.run_frigate --config config/example_frigate.yml`
+
+Incoming MQTT events are normalized, de-duplicated, and emitted as single-line JSON summaries (one per incident) to stdout.
 
 ## How to contribute
 1. Review the overview and development guide to understand scope and expectations.
