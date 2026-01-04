@@ -48,9 +48,18 @@ validate_credentials() {
 }
 
 ensure_bind_address() {
-  if ! grep -q "^SCC_UI_BIND=" "${ENV_FILE}"; then
-    echo "SCC_UI_BIND=${DEFAULT_BIND}" >> "${ENV_FILE}"
+  if [[ -z "${SCC_UI_BIND:-}" ]]; then
+    if grep -q "^SCC_UI_BIND=" "${ENV_FILE}"; then
+      sed -i "s/^SCC_UI_BIND=.*/SCC_UI_BIND=${DEFAULT_BIND}/" "${ENV_FILE}"
+    else
+      echo "SCC_UI_BIND=${DEFAULT_BIND}" >> "${ENV_FILE}"
+    fi
     echo "Defaulted SCC_UI_BIND to ${DEFAULT_BIND} to keep the UI bound locally. Update the value and use a reverse proxy if you intend to expose it."
+    SCC_UI_BIND="${DEFAULT_BIND}"
+  fi
+
+  if [[ "${SCC_UI_BIND}" == "0.0.0.0" ]]; then
+    echo "WARNING: SCC_UI_BIND is set to 0.0.0.0. Ensure you understand the exposure and front the UI with a reverse proxy."
   fi
 }
 

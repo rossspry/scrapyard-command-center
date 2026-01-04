@@ -20,6 +20,10 @@ if [[ -z "${SCC_UI_BIND:-}" ]]; then
   exit 1
 fi
 
+if [[ "${SCC_UI_BIND}" == "0.0.0.0" ]]; then
+  echo "WARNING: SCC_UI_BIND is set to 0.0.0.0. Front the UI with a reverse proxy before exposing it."
+fi
+
 echo "Environment file looks good."
 
 if command -v systemctl >/dev/null 2>&1; then
