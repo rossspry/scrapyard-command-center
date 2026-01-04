@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 WorkingDirectory=%h/.config/scc/current
 EnvironmentFile=%h/.config/scc/.env
-ExecStart=%h/.config/scc/current/.venv/bin/flask --app scc_core.ui run --host=0.0.0.0 --port=8081
+ExecStart=/bin/sh -c '%h/.config/scc/current/.venv/bin/flask --app scc_core.ui run --host="${SCC_UI_BIND:-127.0.0.1}" --port=8081'
 Restart=on-failure
 
 [Install]

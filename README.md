@@ -36,7 +36,7 @@ The runner prints a single JSON line for each Frigate-confirmed decision:
 ## Fresh install on a new server
 1. Clone the repository: `git clone https://github.com/<org>/scrapyard-command-center.git`
 2. Change into the repository: `cd scrapyard-command-center`
-3. Bootstrap the environment and services: `./scripts/install.sh`
+3. Bootstrap the environment and services: `./scripts/install.sh` (first run creates `~/.config/scc/.env`; set `SCC_UI_USERNAME`/`SCC_UI_PASSWORD` and rerun)
 4. Check systemd status: `./scripts/status.sh`
 5. Open the UI at `http://<host>:8081`.
 

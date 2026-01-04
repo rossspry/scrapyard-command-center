@@ -51,4 +51,5 @@ def healthcheck():
 
 
 if __name__ == "__main__":  # pragma: no cover
-    app.run(host="0.0.0.0", port=8081)
+    bind_address = os.getenv("SCC_UI_BIND", "127.0.0.1")
+    app.run(host=bind_address, port=8081)
