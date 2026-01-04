@@ -1,0 +1,13 @@
+[Unit]
+Description=Scrapyard Command Center Reolink watcher
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.config/scc/current
+EnvironmentFile=%h/.config/scc/.env
+ExecStart=%h/.config/scc/current/.venv/bin/python -m scc_core.watch_reolink
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

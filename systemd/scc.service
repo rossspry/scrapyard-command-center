@@ -1,0 +1,13 @@
+[Unit]
+Description=Scrapyard Command Center UI (Flask)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.config/scc/current
+EnvironmentFile=%h/.config/scc/.env
+ExecStart=%h/.config/scc/current/.venv/bin/flask --app scc_core.ui run --host=0.0.0.0 --port=8081
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

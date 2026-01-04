@@ -33,6 +33,13 @@ The runner prints a single JSON line for each Frigate-confirmed decision:
 {"camera_id": "driveway", "event_type": "person_detected", "chosen_source": "frigate", "confidence": 0.83, "ts": "2024-05-18T14:02:03+00:00"}
 ```
 
+## Fresh install on a new server
+1. Clone the repository: `git clone https://github.com/<org>/scrapyard-command-center.git`
+2. Change into the repository: `cd scrapyard-command-center`
+3. Bootstrap the environment and services: `./scripts/install.sh`
+4. Check systemd status: `./scripts/status.sh`
+5. Open the UI at `http://<host>:8081`.
+
 ## How to contribute
 1. Review the overview and development guide to understand scope and expectations.
 2. Open an issue or draft an architectural decision record for significant changes.
