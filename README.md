@@ -33,6 +33,14 @@ The runner prints a single JSON line for each Frigate-confirmed decision:
 {"camera_id": "driveway", "event_type": "person_detected", "chosen_source": "frigate", "confidence": 0.83, "ts": "2024-05-18T14:02:03+00:00"}
 ```
 
+## Installer
+- Use `scripts/install.sh` to create systemd units and wire up the UI service.
+- The installer **refuses to start** the UI service if `SCC_UI_USER` or `SCC_UI_PASS` in `~/.config/scc/.env` are still set to
+  the placeholder value (`changeme`). Update that file before re-running the installer.
+- If `~/.config/scc/.env` does not exist, the installer creates it with placeholders and exits so you can fill it in first.
+- The UI binds to `127.0.0.1` by default (via `SCC_UI_BIND`) so a fresh install is local-only. Adjust the bind address and use a
+  reverse proxy if you want to expose the UI.
+
 ## How to contribute
 1. Review the overview and development guide to understand scope and expectations.
 2. Open an issue or draft an architectural decision record for significant changes.
