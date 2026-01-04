@@ -12,15 +12,26 @@ Scrapyard Command Center is the future home for tooling that coordinates scrapya
 - **Architecture:** High-level components and responsibilities are captured in `docs/overview.md`.
 - **Development conventions:** Contribution and review expectations are outlined in `docs/development.md`.
 
-## Frigate MQTT adapter
-SCC treats detectors as inputs and makes the notification decisions itself. A minimal Frigate MQTT adapter is available for
-local testing without real cameras.
+## Frigate MQTT runner
+SCC treats detectors as inputs and makes the notification decisions itself. A Frigate MQTT runner consumes Frigate
+events, applies SCC dedupe logic, and emits single-line JSON notifications to stdout.
 
+> No fallback alerts; SCC emits only on Frigate-confirmed events.
+
+### Run locally
 1. Install dependencies: `pip install -e .`
-2. Copy and edit MQTT settings in `config/example_frigate.yml` (host, port, credentials, topic, client ID, dedupe window).
-3. Run the adapter: `python -m scc_core.run_frigate --config config/example_frigate.yml`
+2. Create a config file (or edit `config/example_frigate.yml`) with MQTT connection details and a dedupe window. Keep
+   placeholder credentials only; do not commit secrets.
+3. Point `SCC_CONFIG` at your config file (defaults to `config/example_frigate.yml`):
+   `export SCC_CONFIG=config/example_frigate.yml`
+4. Start the runner: `python -m scc_core.run_scc`
 
-Incoming MQTT events are normalized, de-duplicated, and emitted as single-line JSON summaries (one per incident) to stdout.
+### Smoke test
+The runner prints a single JSON line for each Frigate-confirmed decision:
+
+```
+{"camera_id": "driveway", "event_type": "person_detected", "chosen_source": "frigate", "confidence": 0.83, "ts": "2024-05-18T14:02:03+00:00"}
+```
 
 ## How to contribute
 1. Review the overview and development guide to understand scope and expectations.

@@ -2,7 +2,7 @@ mqtt:
   host: mqtt.example.local
   port: 1883
   username: "user"
-  password: "pass"
+  password: "changeme"
   topic: "frigate/events"
   client_id: "scc-frigate-adapter"
 

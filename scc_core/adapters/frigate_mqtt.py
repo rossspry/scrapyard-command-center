@@ -4,11 +4,11 @@ import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+import threading
+from typing import Any, Callable, Dict, Optional
 
 import paho.mqtt.client as mqtt
 
-from scc_core.dedupe import DedupeAggregator
 from scc_core.events import Event
 
 logger = logging.getLogger(__name__)
@@ -27,9 +27,8 @@ class MqttConfig:
 class FrigateMqttAdapter:
     """MQTT adapter that normalizes Frigate events into SCC incidents."""
 
-    def __init__(self, mqtt_config: MqttConfig, aggregator: DedupeAggregator):
+    def __init__(self, mqtt_config: MqttConfig):
         self._config = mqtt_config
-        self._aggregator = aggregator
         self._client = mqtt.Client(client_id=self._config.client_id)
         if self._config.username:
             self._client.username_pw_set(self._config.username, self._config.password)
@@ -39,17 +38,33 @@ class FrigateMqttAdapter:
         self._client.on_disconnect = self._on_disconnect
         self._client.reconnect_delay_set(min_delay=1, max_delay=30)
 
-    def run(self) -> None:
+        self._on_event: Optional[Callable[[Event], None]] = None
+        self._stop_event: Optional[threading.Event] = None
+
+    def start(self, on_event: Callable[[Event], None], stop_event: threading.Event) -> None:
+        """Start consuming MQTT events and forward them through the callback."""
+
+        self._on_event = on_event
+        self._stop_event = stop_event
+
         logger.info(
             "Starting Frigate MQTT adapter",
             extra={"topic": self._config.topic, "host": self._config.host, "port": self._config.port},
         )
         try:
             self._client.connect(self._config.host, self._config.port)
-        except Exception as exc:  # noqa: BLE001
-            logger.exception("Failed to connect to MQTT broker: %s", exc)
+        except Exception:  # noqa: BLE001
+            logger.exception("Failed to connect to MQTT broker")
             raise
-        self._client.loop_forever()
+
+        self._client.loop_start()
+        try:
+            while not self._stop_event.is_set():
+                self._stop_event.wait(0.5)
+        finally:
+            logger.info("Stopping Frigate MQTT adapter")
+            self._client.disconnect()
+            self._client.loop_stop()
 
     def _on_connect(self, client: mqtt.Client, userdata: Any, flags: Dict[str, Any], rc: int) -> None:
         if rc == 0:
@@ -79,9 +94,11 @@ class FrigateMqttAdapter:
             logger.debug("Ignoring unrecognized Frigate event", extra={"payload": payload})
             return
 
-        decision = self._aggregator.process(event)
-        if decision:
-            print(json.dumps(decision.summary()), flush=True)
+        if self._on_event:
+            try:
+                self._on_event(event)
+            except Exception:  # noqa: BLE001
+                logger.exception("Failed to handle Frigate event")
 
     def _normalize_event(self, payload: Dict[str, Any]) -> Optional[Event]:
         record = self._extract_event_record(payload)
