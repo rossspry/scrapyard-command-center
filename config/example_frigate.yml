@@ -1,0 +1,10 @@
+mqtt:
+  host: mqtt.example.local
+  port: 1883
+  username: "user"
+  password: "pass"
+  topic: "frigate/events"
+  client_id: "scc-frigate-adapter"
+
+dedupe:
+  window_seconds: 15
