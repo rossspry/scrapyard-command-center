@@ -34,12 +34,16 @@ The runner prints a single JSON line for each Frigate-confirmed decision:
 ```
 
 ## Installer
-- Use `scripts/install.sh` to create systemd units and wire up the UI service.
-- The installer **refuses to start** the UI service if `SCC_UI_USER` or `SCC_UI_PASS` in `~/.config/scc/.env` are still set to
-  the placeholder value (`changeme`). Update that file before re-running the installer.
-- If `~/.config/scc/.env` does not exist, the installer creates it with placeholders and exits so you can fill it in first.
-- The UI binds to `127.0.0.1` by default (via `SCC_UI_BIND`) so a fresh install is local-only. Adjust the bind address and use a
-  reverse proxy if you want to expose the UI.
+- Fresh installs:
+  - Run `scripts/install.sh` from the repo. It installs user-level systemd units (`scc.service` and `scc-watch-reolink.service`).
+  - The installer **refuses to start** services if `SCC_UI_USERNAME` or `SCC_UI_PASSWORD` in `~/.config/scc/.env` are still set
+    to the placeholder value (`changeme`). Update that file before re-running the installer.
+  - If `~/.config/scc/.env` does not exist, the installer copies `config/.env.example` and exits so you can fill it in first.
+  - The UI bind address comes from `SCC_UI_BIND` and defaults to `127.0.0.1` to keep the UI local-only. Change the value and use
+    a reverse proxy if you want to expose the UI.
+- Status and verification:
+  - `scripts/status.sh` shows the systemd status for the SCC services.
+  - `scripts/test_install.sh` validates the environment file and checks whether the services are enabled.
 
 ## How to contribute
 1. Review the overview and development guide to understand scope and expectations.
