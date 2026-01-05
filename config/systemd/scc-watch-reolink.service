@@ -1,0 +1,13 @@
+[Unit]
+Description=Scrapyard Command Center Reolink watcher placeholder
+After=network.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=%h/.config/scc/.env
+WorkingDirectory=__REPO_DIR__
+ExecStart=/usr/bin/env bash scripts/watch_reolink.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target

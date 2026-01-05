@@ -33,6 +33,21 @@ The runner prints a single JSON line for each Frigate-confirmed decision:
 {"camera_id": "driveway", "event_type": "person_detected", "chosen_source": "frigate", "confidence": 0.83, "ts": "2024-05-18T14:02:03+00:00"}
 ```
 
+## Installer
+- Fresh installs:
+  - Run `scripts/install.sh` from the repo. It installs user-level systemd units (`scc.service` and `scc-watch-reolink.service`).
+  - The installer **refuses to start** services if `SCC_UI_USERNAME` or `SCC_UI_PASSWORD` in `~/.config/scc/.env` are still set
+    to the placeholder value (`changeme`). Update that file before re-running the installer.
+  - If `~/.config/scc/.env` does not exist, the installer copies `config/.env.example` and exits so you can fill it in first.
+  - The UI bind address comes from `SCC_UI_BIND` and defaults to `127.0.0.1` to keep the UI local-only. Change the value and use
+    a reverse proxy if you want to expose the UI.
+- Operating the services:
+  - Use `systemctl --user` to manage the services (for example, `systemctl --user restart scc.service`).
+  - If your distro requires it, enable lingering so the user services start without an active login session (e.g., `loginctl enable-linger $(whoami)`).
+- Status and verification:
+  - `scripts/status.sh` shows the systemd status for the SCC services.
+  - `scripts/test_install.sh` validates the environment file and checks whether the services are enabled.
+
 ## How to contribute
 1. Review the overview and development guide to understand scope and expectations.
 2. Open an issue or draft an architectural decision record for significant changes.
