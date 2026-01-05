@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Optional
+from typing import Optional, Tuple
 
 from flask import Flask, Response, jsonify, request
 
@@ -11,12 +11,31 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 
-def _configured_credentials() -> Optional[tuple[str, str]]:
-    username = os.getenv("SCC_UI_USERNAME")
-    password = os.getenv("SCC_UI_PASSWORD")
-    if username and password:
-        return username, password
-    return None
+def _load_credentials() -> Tuple[str, str]:
+    username = os.getenv("SCC_UI_USERNAME", "").strip()
+    password = os.getenv("SCC_UI_PASSWORD", "").strip()
+
+    if not username or not password:
+        raise RuntimeError("SCC_UI_USERNAME and SCC_UI_PASSWORD must be set.")
+
+    if username == "changeme" or password == "changeme":
+        raise RuntimeError("SCC_UI_USERNAME/SCC_UI_PASSWORD cannot remain 'changeme'.")
+
+    return username, password
+
+
+_CREDENTIALS: Optional[Tuple[str, str]] = None
+
+
+def _configured_credentials() -> tuple[str, str]:
+    global _CREDENTIALS
+    if _CREDENTIALS is None:
+        _CREDENTIALS = _load_credentials()
+    return _CREDENTIALS
+
+
+# Fail fast on import if credentials are missing or placeholders
+_configured_credentials()
 
 
 def _authenticate() -> Response:
