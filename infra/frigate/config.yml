@@ -1,0 +1,71 @@
+mqtt:
+  enabled: false
+
+ffmpeg:
+  hwaccel_args: preset-nvidia-h265
+
+record:
+  enabled: true
+  retain:
+    days: 30
+    mode: all
+
+detect:
+  enabled: true
+
+snapshots:
+  enabled: true
+  retain:
+    default: 2
+
+cameras:
+  front_gate:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://scc:scc12345@192.168.1.40:554/Preview_01_main
+          roles: [record]
+        - path: rtsp://scc:scc12345@192.168.1.40:554/Preview_01_sub
+          roles: [detect]
+    detect:
+      width: 640
+      height: 360
+      fps: 5
+    objects:
+      track:
+        - person
+        - car
+
+  signpost:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://scc:scc12345@192.168.1.31:554/Preview_01_main
+          roles: [record]
+        - path: rtsp://scc:scc12345@192.168.1.31:554/Preview_01_sub
+          roles: [detect]
+    detect:
+      width: 640
+      height: 360
+      fps: 5
+    objects:
+      track:
+        - person
+        - car
+
+version: 0.16-0
+
+semantic_search:
+  enabled: true
+  model_size: small
+
+face_recognition:
+  enabled: true
+  model_size: large
+
+lpr:
+  enabled: true
+
+classification:
+  bird:
+    enabled: false
