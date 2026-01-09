@@ -4,18 +4,15 @@ services:
     image: ghcr.io/blakeblackshear/frigate:stable-tensorrt
     restart: unless-stopped
     shm_size: "1gb"
-
-    # Secrets live on the host in /srv/frigate/.env (NOT in git)
-    env_file:
-      - /srv/frigate/.env
-
+    environment:
+      FRIGATE_RTSP_USER: ${FRIGATE_RTSP_USER}
+      FRIGATE_RTSP_PASSWORD: ${FRIGATE_RTSP_PASSWORD}
     ports:
       - "5000:5000"
       - "1935:1935"
       - "8554:8554"
       - "8555:8555/tcp"
       - "8555:8555/udp"
-
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /srv/frigate/config:/config
@@ -24,7 +21,6 @@ services:
         target: /tmp/cache
         tmpfs:
           size: 1000000000
-
     deploy:
       resources:
         reservations:
