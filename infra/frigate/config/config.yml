@@ -13,19 +13,33 @@ record:
 detect:
   enabled: true
 
+detectors:
+  onnx:
+    type: onnx
+
+model:
+  model_type: yolox
+  width: 768
+  height: 1024
+  input_tensor: nchw
+  input_dtype: float_denorm
+  path: /config/model_cache/yolox_tiny.onnx
+  labelmap_path: /labelmap/coco-80.txt
+
 snapshots:
   enabled: true
   retain:
     default: 2
 
+# Requires env vars: FRIGATE_RTSP_USER and FRIGATE_RTSP_PASSWORD
 cameras:
   front_gate:
     enabled: true
     ffmpeg:
       inputs:
-        - path: rtsp://scc:scc12345@192.168.1.40:554/Preview_01_main
+        - path: rtsp://${FRIGATE_RTSP_USER}:${FRIGATE_RTSP_PASSWORD}@192.168.1.40:554/Preview_01_main
           roles: [record]
-        - path: rtsp://scc:scc12345@192.168.1.40:554/Preview_01_sub
+        - path: rtsp://${FRIGATE_RTSP_USER}:${FRIGATE_RTSP_PASSWORD}@192.168.1.40:554/Preview_01_sub
           roles: [detect]
     detect:
       width: 640
@@ -40,9 +54,9 @@ cameras:
     enabled: true
     ffmpeg:
       inputs:
-        - path: rtsp://scc:scc12345@192.168.1.31:554/Preview_01_main
+        - path: rtsp://${FRIGATE_RTSP_USER}:${FRIGATE_RTSP_PASSWORD}@192.168.1.31:554/Preview_01_main
           roles: [record]
-        - path: rtsp://scc:scc12345@192.168.1.31:554/Preview_01_sub
+        - path: rtsp://${FRIGATE_RTSP_USER}:${FRIGATE_RTSP_PASSWORD}@192.168.1.31:554/Preview_01_sub
           roles: [detect]
     detect:
       width: 640
@@ -60,8 +74,7 @@ semantic_search:
   model_size: small
 
 face_recognition:
-  enabled: true
-  model_size: large
+  enabled: false
 
 lpr:
   enabled: true
