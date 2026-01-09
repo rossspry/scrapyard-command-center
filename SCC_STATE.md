@@ -93,7 +93,18 @@ Nothing biometric may be added without updating this file.
 
 ---
 
-## 11. VOICE & LLM INTEGRATION (PLANNED)
+## 11. ASSISTANT (LOCAL LLM)
+
+- Experimental runtime: Dolphin Llama 3 8B (non-binding)
+- Policy: local-first assistant
+- Web fallback allowed only when explicitly enabled
+- Log every external query
+
+Assistant is **v1.1+**, not v1.0.
+
+---
+
+## 11A. VOICE & LLM INTEGRATION (PLANNED)
 
 ### Goals
 - Local (“in-house”) LLM
