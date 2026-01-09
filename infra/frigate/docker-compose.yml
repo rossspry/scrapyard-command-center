@@ -3,7 +3,7 @@ services:
     container_name: frigate
     image: ghcr.io/blakeblackshear/frigate:stable-tensorrt
     restart: unless-stopped
-    shm_size: "64mb"
+    shm_size: "1gb"
     environment:
       FRIGATE_RTSP_USER: ${FRIGATE_RTSP_USER}
       FRIGATE_RTSP_PASSWORD: ${FRIGATE_RTSP_PASSWORD}
