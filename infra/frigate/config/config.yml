@@ -37,9 +37,9 @@ cameras:
     enabled: true
     ffmpeg:
       inputs:
-        - path: rtsp://${FRIGATE_RTSP_USER}:${FRIGATE_RTSP_PASSWORD}@192.168.1.40:554/Preview_01_main
+        - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.1.40:554/Preview_01_main
           roles: [record]
-        - path: rtsp://${FRIGATE_RTSP_USER}:${FRIGATE_RTSP_PASSWORD}@192.168.1.40:554/Preview_01_sub
+        - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.1.40:554/Preview_01_sub
           roles: [detect]
     detect:
       width: 640
@@ -54,9 +54,9 @@ cameras:
     enabled: true
     ffmpeg:
       inputs:
-        - path: rtsp://${FRIGATE_RTSP_USER}:${FRIGATE_RTSP_PASSWORD}@192.168.1.31:554/Preview_01_main
+        - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.1.31:554/Preview_01_main
           roles: [record]
-        - path: rtsp://${FRIGATE_RTSP_USER}:${FRIGATE_RTSP_PASSWORD}@192.168.1.31:554/Preview_01_sub
+        - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.1.31:554/Preview_01_sub
           roles: [detect]
     detect:
       width: 640
