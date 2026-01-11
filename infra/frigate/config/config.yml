@@ -49,6 +49,9 @@ cameras:
       track:
         - person
         - car
+        - truck
+        - bus
+        - motorcycle
 
   signpost:
     enabled: true
@@ -66,6 +69,9 @@ cameras:
       track:
         - person
         - car
+        - truck
+        - bus
+        - motorcycle
 
 version: 0.16-0
 
