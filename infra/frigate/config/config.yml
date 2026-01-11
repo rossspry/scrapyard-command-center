@@ -31,16 +31,23 @@ snapshots:
   retain:
     default: 2
 
+go2rtc:
+  streams:
+    front_gate_main: "rtsp://${FRIGATE_RTSP_USER}:${FRIGATE_RTSP_PASSWORD}@192.168.1.40:554/Preview_01_main"
+    front_gate_sub: "rtsp://${FRIGATE_RTSP_USER}:${FRIGATE_RTSP_PASSWORD}@192.168.1.40:554/Preview_01_sub"
+    signpost_main: "rtsp://${FRIGATE_RTSP_USER}:${FRIGATE_RTSP_PASSWORD}@192.168.1.31:554/Preview_01_main"
+    signpost_sub: "rtsp://${FRIGATE_RTSP_USER}:${FRIGATE_RTSP_PASSWORD}@192.168.1.31:554/Preview_01_sub"
+
 # Requires env vars: FRIGATE_RTSP_USER and FRIGATE_RTSP_PASSWORD
 cameras:
   front_gate:
     enabled: true
     ffmpeg:
       inputs:
-        - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.1.40:554/Preview_01_main
-          roles: [record]
-        - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.1.40:554/Preview_01_sub
-          roles: [detect]
+        - path: rtsp://127.0.0.1:8554/front_gate_main
+          roles: [record, detect]
+    live:
+      stream_name: front_gate_sub
     detect:
       width: 640
       height: 360
@@ -54,10 +61,10 @@ cameras:
     enabled: true
     ffmpeg:
       inputs:
-        - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.1.31:554/Preview_01_main
-          roles: [record]
-        - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.1.31:554/Preview_01_sub
-          roles: [detect]
+        - path: rtsp://127.0.0.1:8554/signpost_main
+          roles: [record, detect]
+    live:
+      stream_name: signpost_sub
     detect:
       width: 640
       height: 360
