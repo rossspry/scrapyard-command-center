@@ -54,11 +54,11 @@ Docker is the **only** supported runtime for SCC services.
 - Frigate recordings retained for review & automation
 
 ### Detection (IMPORTANT)
-- ❌ TensorRT: REMOVED / NOT SUPPORTED
-- ✅ Current detector: **CPU** (temporary, stable)
-- 🔜 Planned detector: **ONNX (GPU)**
+- ✅ Current detector: **ONNX (GPU)**
+- Execution providers available in-container: **CUDAExecutionProvider**, **TensorrtExecutionProvider** (CPU fallback present)
+- Model: **yolox_tiny.onnx** (loaded by detector)
 
-ONNX migration is a **planned v1.1 task**, not a failure.
+ONNX is **active now** (not just planned). Keep changes deterministic: manage Frigate config under `infra/frigate` and deploy to `/srv/frigate`.
 
 ---
 
