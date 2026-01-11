@@ -16,3 +16,8 @@ dist/
 .mypy_cache/
 .idea/
 .vscode/
+
+# Frigate config backups
+infra/frigate/config/*.bak*
+infra/frigate/config/backup_config.yaml
+
