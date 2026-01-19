@@ -1,0 +1,17 @@
+[Unit]
+Description=Glitch Full-Duplex Voice Assistant
+After=network.target sound.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/srv/scc-ui
+ExecStart=/usr/bin/python3 /srv/scc-ui/glitch_voice_fullduplex.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

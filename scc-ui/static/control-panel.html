@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SCC Control Center</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            overflow-x: hidden;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+        }
+        
+        .header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .control-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.2s;
+        }
+        
+        .control-card:active {
+            transform: scale(0.98);
+        }
+        
+        .control-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .control-icon {
+            font-size: 36px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 120px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 60px;
+            cursor: pointer;
+            transition: background 0.3s;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .toggle-switch.active {
+            background: #4CAF50;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 46px;
+            height: 46px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(60px);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+        
+        .status-active {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .status-inactive {
+            background: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .admin-link {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .admin-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚙️ Scrapyard Command Control Center</h1>
+        <p>Touch-Friendly Control Panel</p>
+    </div>
+    
+    <div class="controls-grid">
+        <!-- Glitch Voice Assistant -->
+        <div class="control-card">
+            <div class="control-title">
+                <span class="control-icon">🤖</span>
+                <span>Glitch Voice</span>
+            </div>
+            <div class="toggle-switch" id="glitch-toggle" onclick="toggleGlitch()">
+                <div class="toggle-slider"></div>
+            </div>
+            <div class="status-badge status-inactive" id="glitch-status">Checking...</div>
+        </div>
+        
+        <!-- Porch Lights -->
+        <div class="control-card">
+            <div class="control-title">
+                <span class="control-icon">💡</span>
+                <span>Porch Lights</span>
+            </div>
+            <div class="toggle-switch" id="lights-toggle" onclick="toggleLights()">
+                <div class="toggle-slider"></div>
+            </div>
+            <div class="status-badge status-inactive" id="lights-status">Both Lights</div>
+        </div>
+    </div>
+    
+    <a href="/" class="admin-link">🔧 Admin Panel</a>
+    
+    <script>
+        // Check Glitch status on load
+        async function checkGlitchStatus() {
+            try {
+                const response = await fetch('/api/glitch/status');
+                const data = await response.json();
+                const toggle = document.getElementById('glitch-toggle');
+                const status = document.getElementById('glitch-status');
+                
+                if (data.active) {
+                    toggle.classList.add('active');
+                    status.textContent = 'Active';
+                    status.className = 'status-badge status-active';
+                } else {
+                    toggle.classList.remove('active');
+                    status.textContent = 'Inactive';
+                    status.className = 'status-badge status-inactive';
+                }
+            } catch (error) {
+                console.error('Error checking status:', error);
+            }
+        }
+        
+        async function toggleGlitch() {
+            const toggle = document.getElementById('glitch-toggle');
+            const isActive = toggle.classList.contains('active');
+            const endpoint = isActive ? '/api/glitch/stop' : '/api/glitch/start';
+            
+            try {
+                await fetch(endpoint, { method: 'POST' });
+                setTimeout(checkGlitchStatus, 1000);
+            } catch (error) {
+                console.error('Error toggling Glitch:', error);
+            }
+        }
+        
+        async function toggleLights() {
+            const toggle = document.getElementById('lights-toggle');
+            const status = document.getElementById('lights-status');
+            const isOn = toggle.classList.contains('active');
+            const newState = isOn ? 'off' : 'on';
+            
+            try {
+                await fetch('/api/homeassistant/porch-lights', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({state: newState})
+                });
+                
+                toggle.classList.toggle('active');
+                status.textContent = isOn ? 'Lights Off' : 'Lights On';
+                status.className = isOn ? 'status-badge status-inactive' : 'status-badge status-active';
+            } catch (error) {
+                console.error('Error toggling lights:', error);
+            }
+        }
+        
+        // Check status every 5 seconds
+        setInterval(checkGlitchStatus, 5000);
+        checkGlitchStatus();
+    </script>
+</body>
+</html>

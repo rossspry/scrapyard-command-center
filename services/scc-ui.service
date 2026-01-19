@@ -1,0 +1,13 @@
+[Unit]
+Description=Scrapyard Command Center UI
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/srv/scc-ui
+ExecStart=/usr/bin/python3 /srv/scc-ui/app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,17 @@
+{
+  "location": {
+    "city": "Woodleaf",
+    "state": "North Carolina",
+    "zip": "27054",
+    "timezone": "America/New_York"
+  },
+  "user": {
+    "name": "Ross",
+    "business": "Scrapyard"
+  },
+  "reminders": [
+    "ALWAYS respond in 1-2 sentences maximum",
+    "NEVER give long explanations",
+    "Be direct and concise"
+  ]
+}

@@ -1,0 +1,278 @@
+mqtt:
+  enabled: true
+  host: 127.0.0.1
+  port: 1883
+
+ffmpeg:
+  hwaccel_args: preset-nvidia-h265
+
+record:
+  enabled: true
+  retain:
+    days: 30
+    mode: active_objects
+  sync_recordings: true
+
+detect:
+  enabled: true
+
+snapshots:
+  enabled: true
+  retain:
+    default: 30
+
+# Global face recognition settings
+face_recognition:
+  enabled: true
+  model_size: large
+
+go2rtc:
+  streams:
+    kitchen: rtsp://scc:scc12345@192.168.1.30:554/h264Preview_02_main
+    shedview: rtsp://scc:scc12345@192.168.1.30:554/h264Preview_04_main
+    north: rtsp://scc:scc12345@192.168.1.30:554/h264Preview_07_main
+    backdoor: rtsp://scc:scc12345@192.168.1.30:554/h264Preview_09_main
+    frontcorner: rtsp://scc:scc12345@192.168.1.30:554/h264Preview_10_main
+    store: rtsp://scc:scc12345@192.168.1.30:554/h264Preview_12_main
+    front_gate_main: rtsp://scc:scc12345@192.168.1.40:554/Preview_01_main
+    front_gate_sub: rtsp://scc:scc12345@192.168.1.40:554/Preview_01_sub
+    backlot_main: rtsp://scc:scc12345@192.168.1.39:554/Preview_01_main
+    backlot_sub: rtsp://scc:scc12345@192.168.1.39:554/Preview_01_sub
+    junkyard_main: rtsp://scc:scc12345@192.168.1.41:554/Preview_01_main
+    junkyard_sub: rtsp://scc:scc12345@192.168.1.41:554/Preview_01_sub
+    facetag_main: rtsp://scc:scc12345@192.168.1.42:554/h264Preview_01_main
+    facetag_sub: rtsp://scc:scc12345@192.168.1.42:554/h264Preview_01_sub
+
+cameras:
+  front_gate:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/front_gate_main
+          roles:
+            - detect
+            - record
+    detect:
+      width: 2160
+      height: 608
+      fps: 5
+    objects:
+      track:
+        - person
+        - car
+      filters:
+        person:
+          min_area: 6000
+          threshold: 0.82
+          min_score: 0.78
+    face_recognition:
+      enabled: true
+
+  signpost:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://scc:scc12345@192.168.1.31:554/Preview_01_main
+          roles:
+            - detect
+            - record
+    detect:
+      width: 640
+      height: 360
+      fps: 5
+    objects:
+      track:
+        - person
+        - car
+    face_recognition:
+      enabled: true
+
+  store:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/store
+          roles:
+            - detect
+            - record
+    detect:
+      width: 640
+      height: 360
+      fps: 5
+    objects:
+      track:
+        - person
+    face_recognition:
+      enabled: true
+
+  north:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/north
+          roles:
+            - detect
+            - record
+    detect:
+      width: 640
+      height: 360
+      fps: 5
+    objects:
+      track:
+        - person
+    face_recognition:
+      enabled: true
+
+  kitchen:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/kitchen
+          roles:
+            - detect
+            - record
+    detect:
+      width: 640
+      height: 360
+      fps: 5
+    objects:
+      track:
+        - person
+    face_recognition:
+      enabled: true
+
+  shedview:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/shedview
+          roles:
+            - detect
+            - record
+    detect:
+      width: 640
+      height: 360
+      fps: 5
+    objects:
+      track:
+        - person
+      filters:
+        person:
+          min_area: 3000
+          threshold: 0.80
+          min_score: 0.75
+    face_recognition:
+      enabled: true
+
+  frontcorner:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/frontcorner
+          roles:
+            - detect
+            - record
+    detect:
+      width: 640
+      height: 360
+      fps: 5
+    objects:
+      track:
+        - person
+    face_recognition:
+      enabled: true
+
+  backdoor:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/backdoor
+          roles:
+            - detect
+            - record
+    detect:
+      width: 640
+      height: 360
+      fps: 5
+    objects:
+      track:
+        - person
+    face_recognition:
+      enabled: true
+
+  backlot:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/backlot_main
+          roles:
+            - detect
+            - record
+    detect:
+      width: 2160
+      height: 608
+      fps: 5
+    objects:
+      track:
+        - person
+      filters:
+        person:
+          min_area: 5000
+          threshold: 0.80
+          min_score: 0.75
+    face_recognition:
+      enabled: true
+
+  junkyard:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/junkyard_main
+          roles:
+            - detect
+            - record
+    detect:
+      width: 2160
+      height: 608
+      fps: 5
+    objects:
+      track:
+        - person
+    face_recognition:
+      enabled: true
+
+  facetag:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/facetag_main
+          roles:
+            - detect
+            - record
+    detect:
+      width: 3840
+      height: 2160
+      fps: 5
+    objects:
+      track:
+        - person
+      filters:
+        person:
+          min_area: 2000
+          threshold: 0.70
+          min_score: 0.65
+    face_recognition:
+      enabled: true
+
+version: 0.16-0
+
+semantic_search:
+  enabled: true
+  model_size: small
+
+lpr:
+  enabled: true
+
+classification:
+  bird:
+    enabled: false
