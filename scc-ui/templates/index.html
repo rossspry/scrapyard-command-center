@@ -383,6 +383,20 @@
                             <span class="slider"></span>
                         </label>
                     </div>
+                    
+                    <!-- Away/Stay Mode Switch -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 1px solid #eee;">
+                        <div>
+                            <strong>🏠 Security Mode</strong>
+                            <div style="font-size: 12px; margin-top: 5px;">
+                                <span id="security-mode-status">Stay Mode</span>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="security-switch" onchange="toggleSecurityMode()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -604,7 +618,58 @@
 
         // Check status on load and every 5 seconds
         checkGlitchStatus();
+        checkSecurityMode();
         setInterval(checkGlitchStatus, 5000);
+        setInterval(checkSecurityMode, 10000);
+    
+        // Security Mode Functions
+        async function checkSecurityMode() {
+            try {
+                const response = await fetch('/api/security/mode');
+                const data = await response.json();
+                const checkbox = document.getElementById('security-switch');
+                const status = document.getElementById('security-mode-status');
+                
+                const isAway = data.mode === 'away';
+                checkbox.checked = isAway;
+                
+                if (isAway) {
+                    status.innerHTML = '<strong style="color: #f59e0b;">🔴 AWAY MODE</strong><br><span style="font-size: 11px;">All cameras detecting</span>';
+                } else {
+                    status.innerHTML = '<strong style="color: #10b981;">🟢 STAY MODE</strong><br><span style="font-size: 11px;">3 cameras active</span>';
+                }
+            } catch (error) {
+                console.error('Error checking security mode:', error);
+                const status = document.getElementById('security-mode-status');
+                if (status) status.innerHTML = '<span style="color: #ef4444;">Error</span>';
+            }
+        }
+
+        async function toggleSecurityMode() {
+            const checkbox = document.getElementById('security-switch');
+            const mode = checkbox.checked ? 'away' : 'stay';
+            
+            try {
+                const response = await fetch('/api/security/mode', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({mode: mode, user: 'web'})
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    checkSecurityMode();
+                } else {
+                    checkbox.checked = !checkbox.checked;
+                    alert('Failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error toggling security mode:', error);
+                checkbox.checked = !checkbox.checked;
+                alert('Error toggling security mode');
+            }
+        }
+
     </script>
 </body>
 </html>

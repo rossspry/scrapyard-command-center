@@ -1,8 +1,11 @@
 from flask import Flask, render_template, jsonify, request, send_from_directory
 import subprocess
+import requests
+import json
 import os
 import threading
 import paho.mqtt.client as mqtt
+from datetime import datetime
 
 
 
@@ -63,7 +66,6 @@ def play_tts_sync(text, voice):
 # MQTT callback for person detection
 def on_message(client, userdata, msg):
     try:
-        import json
         payload = json.loads(msg.payload.decode())
         
         # Check if it's a new person event on gate cameras
@@ -177,6 +179,90 @@ def get_stats():
         "disk": disk.get("output", "N/A").strip()
     })
 
+
+
+# Security Mode Management
+@app.route('/api/security/mode', methods=['GET'])
+def get_security_mode():
+    try:
+        with open('/srv/scc-ui/security_mode.json', 'r') as f:
+            mode_data = json.load(f)
+        return jsonify(mode_data)
+    except Exception as e:
+        print(f"Security mode read error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'mode': 'stay', 'error': f'Could not read mode file: {str(e)}'})
+
+@app.route('/api/security/mode', methods=['POST'])
+def set_security_mode():
+    print("🔵 set_security_mode called", flush=True)
+    try:
+        data = request.json
+        print(f"📥 Received data: {data}", flush=True)
+        new_mode = data.get('mode', 'stay')
+        print(f"🎛️  New mode: {new_mode}", flush=True)
+        
+        if new_mode not in ['stay', 'away']:
+            return jsonify({'success': False, 'error': 'Invalid mode'}), 400
+        
+        # Save mode
+        mode_data = {
+            'mode': new_mode,
+            'last_updated': datetime.now().isoformat(),
+            'updated_by': data.get('user', 'web')
+        }
+        
+        with open('/srv/scc-ui/security_mode.json', 'w') as f:
+            json.dump(mode_data, f, indent=2)
+        
+        print(f"💾 Mode saved to file", flush=True)
+        # Update Frigate config
+        print(f"🚀 About to call update_frigate_detection({new_mode})", flush=True)
+        result = update_frigate_detection(new_mode)
+        print(f"✅ update_frigate_detection returned: {result}", flush=True)
+        
+        return jsonify({'success': True, 'mode': new_mode})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+def update_frigate_detection(mode):
+    """Update Frigate camera detection settings via MQTT"""
+    print(f"🎯 update_frigate_detection called with mode: {mode}", flush=True)
+    try:
+        import paho.mqtt.publish as publish
+        
+        # Define which cameras are active in each mode
+        always_on = ['junkyard', 'front_gate', 'signpost']
+        all_cameras = ['junkyard', 'front_gate', 'signpost', 'backlot', 'facetag',
+                      'kitchen', 'shedview', 'north', 'backdoor', 'frontcorner', 'store']
+        
+        active_cameras = all_cameras if mode == 'away' else always_on
+        
+        # Update each camera's detection via MQTT
+        mqtt_host = "localhost"
+        mqtt_port = 1883
+        
+        for camera in all_cameras:
+            enabled = camera in active_cameras
+            state = "ON" if enabled else "OFF"
+            topic = f"frigate/{camera}/detect/set"
+            
+            publish.single(
+                topic,
+                payload=state,
+                hostname=mqtt_host,
+                port=mqtt_port
+            )
+            print(f"📡 MQTT: {topic} -> {state}", flush=True)
+        
+        print(f"✅ Updated Frigate: {mode} mode = {len(active_cameras)} cameras active", flush=True)
+        return True
+    except Exception as e:
+        print(f"❌ Error updating Frigate via MQTT: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        return False
 
 @app.route('/api/glitch/status')
 def glitch_status():

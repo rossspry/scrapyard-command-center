@@ -184,6 +184,18 @@
             </div>
             <div class="status-badge status-inactive" id="lights-status">Both Lights</div>
         </div>
+        
+        <!-- Security Mode -->
+        <div class="control-card">
+            <div class="control-title">
+                <span class="control-icon">🏠</span>
+                <span>Security Mode</span>
+            </div>
+            <div class="toggle-switch" id="security-toggle" onclick="toggleSecurityMode()">
+                <div class="toggle-slider"></div>
+            </div>
+            <div class="status-badge status-inactive" id="security-status">Stay Mode</div>
+        </div>
     </div>
     
     <a href="/" class="admin-link">🔧 Admin Panel</a>
@@ -245,9 +257,63 @@
             }
         }
         
+
+        async function checkSecurityMode() {
+            try {
+                const response = await fetch('/api/security/mode');
+                const data = await response.json();
+                const toggle = document.getElementById('security-toggle');
+                const status = document.getElementById('security-status');
+                
+                const isAway = data.mode === 'away';
+                if (isAway) {
+                    toggle.classList.add('active');
+                    status.textContent = 'Away - All Cameras';
+                    status.className = 'status-badge status-active';
+                } else {
+                    toggle.classList.remove('active');
+                    status.textContent = 'Stay - 3 Cameras';
+                    status.className = 'status-badge status-inactive';
+                }
+            } catch (error) {
+                console.error('Error checking security mode:', error);
+            }
+        }
+        
+        async function toggleSecurityMode() {
+            const toggle = document.getElementById('security-toggle');
+            const status = document.getElementById('security-status');
+            const isAway = toggle.classList.contains('active');
+            const newMode = isAway ? 'stay' : 'away';
+            
+            try {
+                const response = await fetch('/api/security/mode', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({mode: newMode, user: 'touch-panel'})
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    toggle.classList.toggle('active');
+                    if (newMode === 'away') {
+                        status.textContent = 'Away - All Cameras';
+                        status.className = 'status-badge status-active';
+                    } else {
+                        status.textContent = 'Stay - 3 Cameras';
+                        status.className = 'status-badge status-inactive';
+                    }
+                }
+            } catch (error) {
+                console.error('Error toggling security mode:', error);
+            }
+        }
+        
         // Check status every 5 seconds
         setInterval(checkGlitchStatus, 5000);
+        setInterval(checkSecurityMode, 10000);
         checkGlitchStatus();
+        checkSecurityMode();
     </script>
 </body>
 </html>
