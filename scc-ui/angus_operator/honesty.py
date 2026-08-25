@@ -43,6 +43,18 @@ _STATE_DONE = re.compile(
     r"\bevery camera is healthy\b",
     re.I,
 )
+# Promises / future-tense device actions. LLM talk is never authoritative.
+_PROMISE = re.compile(
+    r"\b(?:the )?(?:scrapyard |scrap yard )?(?:porch )?lights? will "
+    r"(?:be )?(?:turned |switched |shut )?(?:off|on)\b|"
+    r"\b(?:the )?(?:front )?doors? will (?:be )?(?:locked|unlocked)\b|"
+    r"\b(?:i(?:['’]ll| will)|we(?:['’]ll| will)|going to|gonna)\b.{0,48}"
+    r"\b(?:turn(?:ing)?|lock(?:ing)?|unlock(?:ing)?|switch(?:ing)?|shut(?:ting)?)\b.{0,48}"
+    r"\b(?:lights?|porch|doors?|lock|frigate|cameras?)\b|"
+    r"\bwill (?:turn|lock|unlock|switch|shut)\b.{0,40}\b(?:lights?|porch|doors?)\b|"
+    r"\bturning (?:the )?(?:scrapyard |scrap yard )?(?:porch )?lights? (?:off|on)\b",
+    re.I | re.DOTALL,
+)
 UNVERIFIED_ACTION_REFUSE = "I didn't perform or verify that action."
 _DID_YOU = re.compile(
     r"\b(?:did you really|did you actually|did you just say|"
@@ -77,9 +89,9 @@ def claims_yard_action(reply: str) -> bool:
 
 
 def claims_unverified_action(reply: str) -> bool:
-    """True when the model claims it performed or verified an SCC action."""
+    """True when the model claims or promises an SCC/device action."""
     text = reply or ""
-    if _STATE_DONE.search(text):
+    if _STATE_DONE.search(text) or _PROMISE.search(text):
         return True
     if _DONE_VERB.search(text) and _DONE_OBJECT.search(text):
         return True

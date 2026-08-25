@@ -111,6 +111,14 @@ def voice_local_timeout_s() -> float:
     except ValueError:
         return 12.0
 
+
+def voice_local_history_turns() -> int:
+    """Max recent thread turns sent to qwen3:1.7b. Hermes history is unchanged."""
+    try:
+        return max(0, int(os.getenv("GLITCH_VOICE_LOCAL_HISTORY_TURNS", "4") or "4"))
+    except ValueError:
+        return 4
+
 TIMEZONE = os.getenv("GLITCH_TIMEZONE", "America/New_York")
 
 _DEFAULT_SYSTEM = (
@@ -130,7 +138,11 @@ _DEFAULT_SYSTEM = (
 _VOICE_STYLE = (
     "Spoken reply rules: answer in one or two short sentences unless the user "
     "explicitly asks for more detail. No lists, no preamble, no markdown. "
-    "Sound like Angus speaking aloud, not writing an essay."
+    "Sound like Angus speaking aloud, not writing an essay. "
+    "Never claim or promise that lights, doors, cameras, or other SCC devices "
+    "were changed, are changing, or will be changed. You do not control hardware. "
+    "If the request is unclear or misheard, say you did not understand. "
+    "Do not guess a yard action."
 )
 
 SYSTEM_PROMPT = os.getenv("GLITCH_SYSTEM_PROMPT", _DEFAULT_SYSTEM)
@@ -268,8 +280,10 @@ def build_system_prompt(for_xai: bool = False, *, voice: bool = False) -> str:
     parts.append(
         "HARD RULE: You cannot run docker, compose, apt, systemctl, or Home Assistant "
         "from this chat. Never say you started an upgrade, image pull, restart, or "
-        "light change. Never invent logs, digests, download progress, or error lines. "
-        "Frigate and code changes only happen if a tool already confirmed this turn."
+        "light change. Never promise that lights, doors, or cameras will be changed. "
+        "Never invent logs, digests, download progress, or error lines. "
+        "Frigate and code changes only happen if a tool already confirmed this turn. "
+        "If you are not sure what was asked, say you did not understand — do not guess an action."
     )
     standing = _load_standing_files()
     if standing:
@@ -995,6 +1009,38 @@ def _sanitize_reply(text: str) -> Tuple[str, bool]:
     return safe, bool(raw) and safe != raw
 
 
+def _is_action_claim(text: str) -> bool:
+    try:
+        from angus_operator.honesty import claims_unverified_action, claims_yard_action
+    except Exception:
+        return False
+    return claims_unverified_action(text) or claims_yard_action(text)
+
+
+def _voice_safe_history(
+    history: Optional[List[Dict[str, str]]],
+) -> List[Dict[str, str]]:
+    """Minimal recent turns for the fast voice model. Drop action claims/promises.
+
+    Does not change Hermes durable memory or the on-disk thread.
+    """
+    cleaned: List[Dict[str, str]] = []
+    for turn in history or []:
+        role = str(turn.get("role") or "")
+        content = str(turn.get("content") or "").strip()
+        if role not in ("user", "assistant") or not content:
+            continue
+        if role == "assistant" and _is_action_claim(content):
+            if cleaned and cleaned[-1]["role"] == "user":
+                cleaned.pop()
+            continue
+        cleaned.append({"role": role, "content": content})
+    limit = voice_local_history_turns()
+    if limit and len(cleaned) > limit:
+        cleaned = cleaned[-limit:]
+    return cleaned
+
+
 def _sanitized_nonstream_fallback(
     user_text: str,
     *,
@@ -1241,11 +1287,12 @@ def ask_glitch(
         return {"reply": "", "backend": "none", "model": "", "cleaned_user": ""}
 
     if voice:
-        local = _try_voice_local(text, history=history, max_tokens=max_tokens)
+        voice_history = _voice_safe_history(history)
+        local = _try_voice_local(text, history=voice_history, max_tokens=max_tokens)
         if local:
             return local
         return _sanitized_nonstream_fallback(
-            text, voice=True, history=history, fallback_from="local"
+            text, voice=True, history=voice_history, fallback_from="local"
         )
 
     if _hermes_mode():
@@ -1346,10 +1393,11 @@ def iter_glitch_sentences(
         return
 
     if voice:
+        voice_history = _voice_safe_history(history)
         packed = _try_voice_local(
-            text, history=history, max_tokens=max_tokens
+            text, history=voice_history, max_tokens=max_tokens
         ) or _sanitized_nonstream_fallback(
-            text, voice=True, history=history, fallback_from="local"
+            text, voice=True, history=voice_history, fallback_from="local"
         )
         reply = (packed.get("reply") or "").strip()
         info.update(
