@@ -1,0 +1,83 @@
+model:
+  default: angus-local
+  provider: custom
+  base_url: http://localhost:11434/v1
+  context_length: 65536
+
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  memory_char_limit: 2200
+  user_char_limit: 1375
+  nudge_interval: 10
+  write_approval: false
+
+session_reset:
+  mode: none
+
+platform_toolsets:
+  api_server: [memory]
+  cli: [memory]
+  telegram: [memory]
+  discord: [memory]
+  homeassistant: [memory]
+
+agent:
+  max_turns: 20
+  verbose: false
+  reasoning_effort: low
+  reasoning_overrides:
+    angus-local: low
+  disabled_toolsets:
+    - terminal
+    - file
+    - web
+    - browser
+    - vision
+    - image_gen
+    - video_gen
+    - video
+    - tts
+    - homeassistant
+    - code_execution
+    - coding
+    - delegation
+    - skills
+    - cronjob
+    - debugging
+    - computer_use
+    - search
+    - x_search
+    - kanban
+    - discord
+    - discord_admin
+    - spotify
+    - messaging
+    - feishu_doc
+    - feishu_drive
+    - bfl
+    - a2a
+    - stt
+    - todo
+    - session_search
+    - clarify
+    - context_engine
+    - video
+    - yuanbao
+
+terminal:
+  backend: local
+  timeout: 5
+
+browser:
+  inactivity_timeout: 1
+
+updates:
+  pre_update_backup: off
+
+gateway:
+  api_server:
+    enabled: true
+    port: 8642
+    host: 127.0.0.1
+    model_name: angus-hermes

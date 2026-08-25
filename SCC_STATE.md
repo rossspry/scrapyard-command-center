@@ -14,6 +14,8 @@ This layout is **canonical** for SCC v1.0.
 - Secure Boot: Off
 - `nvidia-smi`: working on host
 - GPU passthrough: confirmed inside Docker containers
+- RTX 3060 remains available for Frigate + Ollama
+- Desired Chatterbox TTS policy: CPU (`CHATTERBOX_DEVICE=cpu`) so it does not consume VRAM needed by Ollama
 
 **Important:**  
 TensorRT detector is **no longer supported** by Frigate on amd64 systems.
@@ -93,37 +95,41 @@ Nothing biometric may be added without updating this file.
 
 ---
 
-## 11. VOICE & LLM INTEGRATION (PLANNED)
+## 11. VOICE & LLM INTEGRATION
 
-### Assistant (Local LLM)
+### Assistant (Local LLM) — WORKING (localhost only)
 
-- Experimental runtime: Dolphin Llama 3 8B (non-binding)
-- Policy: local-first assistant
-- Web fallback allowed only when explicitly enabled
-- All external queries must be logged
+- Runtime: Hermes Agent (`hermes-agent.service`)
+- Gateway: `127.0.0.1:8642` (localhost only)
+- API model name: `angus-hermes`
+- Backend: Ollama `http://localhost:11434/v1`
+- Local model: `angus-local` (based on `qwen3:4b`, `PARAMETER num_ctx 65536`)
+- Hermes `context_length`: `65536`
+- Git source: `infra/hermes/`
+- Secrets: `/var/lib/hermes/.env` stays on the host; `API_SERVER_KEY` is not in Git
+- Isolation: `hermes` user, `ProtectSystem=strict`, `ReadWritePaths=/var/lib/hermes`
+- Isolation drop-in blocks `/opt/angus`, SCC UI, Frigate, timeclock, SCC config, Grok, and Docker
+- Disabled toolsets include terminal, file, web, browser, and other non-memory tools
+- End-to-end gateway test succeeded with: `HERMES LOCAL 64K OK`
 
-The local assistant is **v1.1+**, not part of v1.0.
+Policy remains local-first. This setup does not grant Hermes Docker, Frigate, SCC filesystem, web, or terminal access.
 
 ### Voice Interface
 
-- Voice input/output is deferred
-- Will integrate only after assistant logic is stable
+- Full SCC voice assistant (wake phrase / yard commands) is still deferred
 - Voice is an interface layer, not the decision engine
+- Chatterbox TTS (`angus-chatterbox.service`) is in use on the host
+- Desired deterministic policy: systemd drop-in `CHATTERBOX_DEVICE=cpu` (tracked in `infra/hermes/systemd/angus-chatterbox.service.d/override.conf`)
+- Live unit currently still has `CHATTERBOX_DEVICE=cuda`; CPU is happening via low-VRAM fallback until that drop-in is installed
+- Do not move Chatterbox back to CUDA
 
-### Goals
+### Goals (unchanged)
 - Local (“in-house”) LLM
 - Voice wake phrase: “Hey Scrapyard”
 - Commands such as:
   - “What’s today’s price for irony aluminum?”
   - “Clock Crystal in”
   - “Announce yard closing in 10 minutes”
-
-### Status
-- Infrastructure planned
-- No LLM runtime deployed yet
-- No voice listeners active yet
-
-Voice + LLM is **v1.1+**, not v1.0.
 
 ---
 
@@ -147,11 +153,13 @@ Voice + LLM is **v1.1+**, not v1.0.
 
 **SCC v1.0 Foundation: COMPLETE**
 
+Hermes local (64k, localhost-only) is captured in `infra/hermes`.
+
 Next planned milestones:
 1. ONNX GPU detector migration
 2. Expand Frigate from 2 → 10 cameras
 3. Rule engine formalization
-4. Voice + LLM integration (v1.1)
+4. Voice interface on top of the local assistant (v1.1)
 5. Facial recognition review (v2.0 only)
 
 ---
