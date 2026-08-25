@@ -1,0 +1,44 @@
+[Unit]
+Description=Hermes Agent API server (isolated, localhost only)
+Documentation=https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hermes
+Group=hermes
+WorkingDirectory=/opt/hermes
+Environment=HOME=/var/lib/hermes
+Environment=USER=hermes
+Environment=HERMES_HOME=/var/lib/hermes
+Environment=CUDA_VISIBLE_DEVICES=
+Environment=PATH=/opt/hermes/.venv/bin:/usr/bin:/bin
+Environment=UV_CACHE_DIR=/var/lib/hermes/.cache/uv
+ExecStart=/opt/hermes/.venv/bin/hermes gateway
+Restart=on-failure
+RestartSec=8
+TimeoutStartSec=120
+TimeoutStopSec=30
+StandardOutput=journal
+StandardError=journal
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/hermes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictNamespaces=yes
+
+[Install]
+WantedBy=multi-user.target
