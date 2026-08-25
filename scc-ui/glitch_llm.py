@@ -103,6 +103,14 @@ def voice_local_think() -> bool:
     """Thinking/reasoning for the fast voice model. Default off."""
     return _env_bool("GLITCH_VOICE_LOCAL_THINK", "false")
 
+
+def voice_local_timeout_s() -> float:
+    """Ollama timeout for the fast voice path only. General Ollama stays at 180s."""
+    try:
+        return max(1.0, float(os.getenv("GLITCH_VOICE_LOCAL_TIMEOUT", "12") or "12"))
+    except ValueError:
+        return 12.0
+
 TIMEZONE = os.getenv("GLITCH_TIMEZONE", "America/New_York")
 
 _DEFAULT_SYSTEM = (
@@ -718,6 +726,7 @@ def ask_ollama(
     history: Optional[List[Dict[str, str]]] = None,
     model: Optional[str] = None,
     think: Optional[bool] = None,
+    timeout: Optional[float] = None,
 ) -> str:
     use_model = (model or OLLAMA_MODEL)
     payload = _ollama_payload(
@@ -731,11 +740,12 @@ def ask_ollama(
         think=think,
     )
     think_s = "n/a" if think is None else str(int(bool(think)))
+    use_timeout = 180.0 if timeout is None else float(timeout)
     log_line(
         f"[ollama] model={use_model} voice={int(voice)} "
-        f"think={think_s} max_tokens={max_tokens or '-'}"
+        f"think={think_s} max_tokens={max_tokens or '-'} timeout={use_timeout:g}"
     )
-    r = requests.post(f"{OLLAMA_URL}/api/chat", json=payload, timeout=180)
+    r = requests.post(f"{OLLAMA_URL}/api/chat", json=payload, timeout=use_timeout)
     r.raise_for_status()
     data = r.json()
     return (data.get("message") or {}).get("content", "").strip()
@@ -1160,9 +1170,10 @@ def _try_voice_local(
     model = voice_local_model()
     think = voice_local_think()
     token_limit = _voice_token_limit(True, max_tokens)
+    timeout_s = voice_local_timeout_s()
     log_line(
         f"[voice-local] model={model} think={int(bool(think))} "
-        f"max_tokens={token_limit or '-'}"
+        f"max_tokens={token_limit or '-'} timeout={timeout_s:g}"
     )
     try:
         reply = ask_ollama(
@@ -1172,6 +1183,7 @@ def _try_voice_local(
             history=history,
             model=model,
             think=think,
+            timeout=timeout_s,
         )
     except Exception as exc:
         log_line(f"[voice-local] failed ({type(exc).__name__}); falling back")
@@ -1484,6 +1496,7 @@ def status_dict() -> Dict[str, Any]:
         "voice_xai_model": VOICE_XAI_MODEL,
         "voice_local_model": voice_local_model(),
         "voice_local_think": voice_local_think(),
+        "voice_local_timeout_s": voice_local_timeout_s(),
         "voice_max_tokens": VOICE_MAX_TOKENS,
         "voice_stream": VOICE_STREAM,
         "hermes_enabled": os.getenv("ANGUS_HERMES_ENABLED", "false").strip().lower()

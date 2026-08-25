@@ -9,6 +9,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import requests
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
@@ -54,6 +56,7 @@ class VoiceLocalPathTests(unittest.TestCase):
         self.assertIn("/api/chat", url)
         self.assertNotIn("8642", url)
         self.assertNotIn("xai", url)
+        self.assertEqual(post.call_args.kwargs["timeout"], 12.0)
 
     def test_voice_model_env_override(self):
         with patch.dict(os.environ, {"GLITCH_VOICE_LOCAL_MODEL": "qwen3:1.7b-fast"}), patch(
@@ -128,6 +131,43 @@ class VoiceLocalPathTests(unittest.TestCase):
         self.assertEqual(meta["model"], "qwen3:1.7b")
         self.assertTrue(yielded)
         self.assertEqual(" ".join(yielded), "First sentence. Second sentence.")
+
+    def test_voice_local_uses_short_timeout(self):
+        with patch.dict(os.environ, {"GLITCH_VOICE_LOCAL_TIMEOUT": "8"}), patch(
+            "glitch_llm.requests.post", return_value=_ollama_resp("ok")
+        ) as post, patch.object(glitch_llm, "_try_hermes", side_effect=AssertionError("hermes")), patch.object(
+            glitch_llm, "ask_xai", side_effect=AssertionError("xai")
+        ):
+            result = glitch_llm.ask_glitch("hi", voice=True)
+        self.assertEqual(result["backend"], "local")
+        self.assertEqual(post.call_args.kwargs["timeout"], 8.0)
+
+    def test_voice_timeout_falls_back_to_xai(self):
+        with patch(
+            "glitch_llm.requests.post",
+            side_effect=requests.exceptions.Timeout("voice-local stalled"),
+        ), patch.object(glitch_llm, "xai_available", return_value=True), patch.object(
+            glitch_llm, "ask_xai", return_value="from xai after timeout"
+        ) as xai, patch.object(
+            glitch_llm, "_try_hermes", side_effect=AssertionError("hermes")
+        ):
+            result = glitch_llm.ask_glitch("hello", voice=True)
+        xai.assert_called()
+        self.assertEqual(result["backend"], "xai")
+        self.assertEqual(result["reply"], "from xai after timeout")
+
+    def test_general_ollama_timeout_stays_180(self):
+        with patch("glitch_llm.requests.post", return_value=_ollama_resp("ok")) as post:
+            glitch_llm.ask_ollama("hello", voice=False)
+        self.assertEqual(post.call_args.kwargs["timeout"], 180.0)
+
+        with patch.object(glitch_llm, "_hermes_mode", return_value=False), patch.object(
+            glitch_llm, "choose_backend", return_value=("local", "hello")
+        ), patch("glitch_llm.requests.post", return_value=_ollama_resp("ok")) as post2:
+            result = glitch_llm.ask_glitch("hello", voice=False)
+        self.assertEqual(result["backend"], "local")
+        self.assertEqual(post2.call_args.kwargs["timeout"], 180.0)
+        self.assertNotEqual(post2.call_args.kwargs["timeout"], glitch_llm.voice_local_timeout_s())
 
     def test_voice_local_payload_helper_think_false(self):
         payload = glitch_llm._ollama_payload(
